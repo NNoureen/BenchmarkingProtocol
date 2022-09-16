@@ -2,10 +2,16 @@ stringsAsFactors=FALSE
 library(stringr)
 library(foreach)
 library(doParallel)
-library('GSA')
-registerDoParallel(20)  # use multicore, set to the number of our cores
+library('GSA')         ## for calling GSA.read.gmt function
+registerDoParallel(20)  # use multicore, set the number of cores to 20
 
 ################ SCSE function ############ 
+
+## Function Input: single-cell gene expression data and genes in one gene sets (This function is implemented using the equation described in Pont et al.,2019)
+
+## Function Output: Scores for each cell/sample ID
+
+
 SingleCellSigExplorer <- function(data,genes)
 {
 	DataRanks = data[which(rownames(data) %in% genes),]
@@ -31,6 +37,12 @@ SingleCellSigExplorer <- function(data,genes)
 
 ############### Calling SCSE function using gene sets #########################
 
+## Function Input: single-cell gene expression data, all gene sets in a list, and k represents the index for a gene set in a list
+
+## Function Output: A dataframe containing sample/cell ID, gene set score and pathwayName
+
+
+
 Execute_SCSE <- function(data,Genesets1,k)
 {
 	genes = unlist(Genesets1$genesets[k])
@@ -47,19 +59,19 @@ Execute_SCSE <- function(data,Genesets1,k)
 	}
 }
 
-##############################################################################################################################
+#####################################################################################################
 ############## Reading data into R  ############################################
 
-data = readRDS('IDHAstrocytoma_GE_20210311.RDS')
+data = readRDS('IDHAstrocytoma_GE_20210311.RDS')             ## Reading gene expression data in RDS format
 data <- as.matrix(data)
 
-############################# Reading genes sets and computing scores using SCSE function ################################
+############################# Reading genes sets and computing scores using SCSE function and dopar  ################################
 
-Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')              ### loading hallmark gene sets
+Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')              ### Reading hallmark gene sets
 GSsize = length(Genesets1$genesets)
 
 
-CombineSCSEResult1 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineSCSEResult1 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%           ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -70,11 +82,11 @@ CombineSCSEResult1 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "re
 write.table(CombineSCSEResult1,'SCSE_IDHA_HallmarksResult.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
 
-Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')          ### loading C2 gene sets
+Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')          ### Reading C2 gene sets
 GSsize = length(Genesets1$genesets)
 
 
-CombineSCSEResult2 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineSCSEResult2 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%           ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -85,10 +97,10 @@ CombineSCSEResult2 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "re
 write.table(CombineSCSEResult2,'SCSE_IDHA_C2_GSets.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
 
-Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt') ### loading C3 gene sets
+Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt') ### Reading C3 gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineSCSEResult3 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineSCSEResult3 <-  foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%          ## parallal processing using dopar
 {
 	print("C5")
 	print(k)

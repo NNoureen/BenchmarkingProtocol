@@ -2,99 +2,23 @@ library('dplyr')
 stringsAsFactors=FALSE
 library(stringr)
 library(data.table)
-library(effectsize)
+library(effectsize)      ## include effectsize library
 
-######################### Combining JASMINE scores for All gene sets ###########################
-
-
-JAS1 =  as.data.frame(fread("JAS_IDHA_HallmarksResult.txt"))
-JAS2 = as.data.frame(fread("JAS_IDHA_C2_GSets.txt"))
-JAS3 = as.data.frame(fread("JAS_IDHA_C3_GSets.txt"))
-
-HNSC_C5_Results = rbind(JAS1,JAS2)
-HNSC_C5_Results = rbind(HNSC_C5_Results,JAS3)
-row.names(HNSC_C5_Results) = HNSC_C5_Results$Msigb
-lastidx = ncol(HNSC_C5_Results)
-HNSC_C5_Results = HNSC_C5_Results[,-lastidx]
-HNSC_C5_Results = t(HNSC_C5_Results)
-saveRDS(HNSC_C5_Results,'JASscores_IDHAstrocytoma.RDS')
+############################## Effect Size Function Definition #########################################
 
 
-
-######################### Combining AUCell scores for All gene sets##################################################
-
-JAS1 =  as.data.frame(fread("AUCell_IDHA_HallmarksResult.txt"))
-JAS2 = as.data.frame(fread("AUCell_IDHA_C3.txt"))
-JAS3 = as.data.frame(fread("AUCell_IDHA_C2_GSets.txt"))
+Metadata = read.table('IDHAstrocytoma_Metadata.txt',sep='\t',head=T)              ## Reading the Metadata to divide cells into tumor and normal cases
+TumorCells = Metadata$SampleID[which(Metadata$Clusters == "malignant")]    ##  Defining Tumor cells subset using Metadata
+NormalCells = Metadata$SampleID[which(Metadata$Clusters == "Normal")]       ##  Defining Normal cells subset using Metadata
 
 
-HNSC_C5_Results = rbind(JAS1,JAS2)
-HNSC_C5_Results = rbind(HNSC_C5_Results,JAS3)
-row.names(HNSC_C5_Results) = HNSC_C5_Results$Msigb
-lastidx = ncol(HNSC_C5_Results)
-HNSC_C5_Results = HNSC_C5_Results[,-lastidx]
-HNSC_C5_Results = t(HNSC_C5_Results)
-saveRDS(HNSC_C5_Results,'AUCell_IDHAstrocytoma.RDS')
+### Effect size function
+### Function Input: data represents the scores for all cells computed by a scoring method, TumorCells vector contains the IDs of all tumor cells, and NormalCells vector contains the IDs of all Normal cells. These IDs would divide the scoring data into tumor and normal cases inside the function
 
+EffectSizeCalculation <- function(data,TumorCells,NormalCells){ 
 
-
-######################### SCSE ##################################################
-
-JAS1 =  as.data.frame(fread("SCSE_IDHA_HallmarksResult.txt"))
-JAS2 = as.data.frame(fread("SCSE_IDHA_C2_GSets.txt"))
-JAS3 = as.data.frame(fread("SCSE_IDHA_C3.txt"))
-
-
-HNSC_C5_Results = rbind(JAS1,JAS2)
-HNSC_C5_Results = rbind(HNSC_C5_Results,JAS3)
-row.names(HNSC_C5_Results) = HNSC_C5_Results$Msigb
-lastidx = ncol(HNSC_C5_Results)
-HNSC_C5_Results = HNSC_C5_Results[,-lastidx]
-HNSC_C5_Results = t(HNSC_C5_Results)
-saveRDS(HNSC_C5_Results,'SCSE_IDHAstrocytoma.RDS')
-
-########################## GSVA #################################################
-
-JAS1 =  as.data.frame(fread("GSVA_IDHA_HallmarksResult.txt"))
-JAS2 = as.data.frame(fread("GSVA_IDHA_C2_GSets.txt"))
-JAS3 = as.data.frame(fread("GSVA_IDHA_C3.txt"))
-
-
-HNSC_C5_Results = rbind(JAS1,JAS2)
-HNSC_C5_Results = rbind(HNSC_C5_Results,JAS3)
-row.names(HNSC_C5_Results) = HNSC_C5_Results$Msigb
-lastidx = ncol(HNSC_C5_Results)
-HNSC_C5_Results = HNSC_C5_Results[,-lastidx]
-HNSC_C5_Results = t(HNSC_C5_Results)
-saveRDS(HNSC_C5_Results,'GSVA_IDHAstrocytoma.RDS')
-
-########################## ssGSEA #################################################
-
-JAS1 =  as.data.frame(fread("ssGSEA_IDHA_HallmarksResult.txt"))
-JAS2 = as.data.frame(fread("ssGSEA_IDHA_C2_GSets.txt"))
-JAS3 = as.data.frame(fread("ssGSEA_IDHA_C3.txt"))
-
-
-HNSC_C5_Results = rbind(JAS1,JAS2)
-HNSC_C5_Results = rbind(HNSC_C5_Results,JAS3)
-row.names(HNSC_C5_Results) = HNSC_C5_Results$Msigb
-lastidx = ncol(HNSC_C5_Results)
-HNSC_C5_Results = HNSC_C5_Results[,-lastidx]
-HNSC_C5_Results = t(HNSC_C5_Results)
-saveRDS(HNSC_C5_Results,'ssGSEA_IDHAstrocytoma.RDS')
-
-
-
-############################## Effect Size Function #########################################
-HNSC_Classifications = read.table('IDHAstrocytoma_Metadata.txt',sep='\t',head=T)
-HNSC_Stem = HNSC_Classifications$SampleID[which(HNSC_Classifications$Clusters == "Tumor")]
-HNSC_Diff = HNSC_Classifications$SampleID[which(HNSC_Classifications$Clusters == "Normal")]
-
-
-EffectSizeCalculation <- function(data,HNSC_Stem,HNSC_Diff){
-
-data_Cancer = data[which(rownames(data) %in% HNSC_Stem),]
-data_Normal = data[which(rownames(data) %in% HNSC_Diff),]
+data_Cancer = data[which(rownames(data) %in% TumorCells),]            ##  Defining Tumor cells scores subset using Tumor cell IDs  
+data_Normal = data[which(rownames(data) %in% NormalCells),]           ##  Defining Normal cells scores subset using Normal cell IDs  
 
 
 OverallES = rbind()
@@ -103,7 +27,7 @@ for(j in 1:ncol(data)){
 out <- tryCatch(
 {
 print(j)
-effectval = data.frame(colnames(data)[j],cohens_d(data_Cancer[,j],data_Normal[,j]))
+effectval = data.frame(colnames(data)[j],cohens_d(data_Cancer[,j],data_Normal[,j]))    ## cohens_d function to compute the effectsize
 colnames(effectval)[1] = 'Process'
 OverallES = rbind(OverallES,effectval)
 },
@@ -117,53 +41,55 @@ OverallES = data.frame(Process = "NA", Cohens_d = "NA",CI = "NA","CI_low" = "NA"
 return(OverallES)
 }
 
-############################## Effect Size Function Calling for each Method #########################################
+############################## Effect Size Function Calling for each Signature Scoring Method #########################################
 
-####################### JASMINE Cohens_d ###############
+####################### JASMINE  ###############
 
-data = readRDS('JASscores_IDHAstrocytoma.RDS')
-Mean_HNSC_JAS = EffectSizeCalculation(data,HNSC_Stem,HNSC_Diff)
+data = readRDS('JASscores_IDHAstrocytoma.RDS')                     ### Reading combined scoring file of JASMINE for all gene sets
+Mean_HNSC_JAS = EffectSizeCalculation(data,TumorCells,NormalCells) ###  Calling effectsize function using JASMINE scores 
 colnames(Mean_HNSC_JAS)[2] = 'ES_JAS'
-write.table(Mean_HNSC_JAS,'ES_JAS.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Mean_HNSC_JAS,'ES_JAS.txt',sep='\t',quote=FALSE,row.names=FALSE)   ### saving the effectsize result for JASMINE scores
 
 
-####################### ssgsea Cohens_d ###############
+####################### ssgsea  ###############
 
-data = readRDS('ssGSEA_IDHAstrocytoma.RDS')
-Mean_HNSC_ssgsea = EffectSizeCalculation(data,HNSC_Stem,HNSC_Diff)
+data = readRDS('ssGSEA_IDHAstrocytoma.RDS')								### Reading combined scoring file of ssGSEA for all gene sets
+Mean_HNSC_ssgsea = EffectSizeCalculation(data,TumorCells,NormalCells)  ###  Calling effectsize function using ssGSEA scores 
 colnames(Mean_HNSC_ssgsea)[2] = 'ES_ssgsea'
-write.table(Mean_HNSC_ssgsea,'ES_ssgsea.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Mean_HNSC_ssgsea,'ES_ssgsea.txt',sep='\t',quote=FALSE,row.names=FALSE)   ### saving the effectsize result for ssGSEA scores
 
-####################### SCSE Cohens_d ###############
+####################### SCSE  ###############
 
-data = readRDS('SCSE_IDHAstrocytoma.RDS')
-Mean_HNSC_SCSE = EffectSizeCalculation(data,HNSC_Stem,HNSC_Diff)
+data = readRDS('SCSE_IDHAstrocytoma.RDS')								### Reading combined scoring file of SCSE for all gene sets
+Mean_HNSC_SCSE = EffectSizeCalculation(data,TumorCells,NormalCells)			###  Calling effectsize function using SCSE scores 
 colnames(Mean_HNSC_SCSE)[2] = 'ES_SCSE'
-write.table(Mean_HNSC_SCSE,'ES_SCSE.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Mean_HNSC_SCSE,'ES_SCSE.txt',sep='\t',quote=FALSE,row.names=FALSE)		### saving the effectsize result for SCSE scores
 
-####################### AUCell Cohens_d ###############
+####################### AUCell  ###############
 
-data = readRDS('AUCell_IDHAstrocytoma.RDS')
-Mean_HNSC_AUCell = EffectSizeCalculation(data,HNSC_Stem,HNSC_Diff)
+data = readRDS('AUCell_IDHAstrocytoma.RDS')									### Reading combined scoring file of AUCell for all gene sets
+Mean_HNSC_AUCell = EffectSizeCalculation(data,TumorCells,NormalCells)		###  Calling effectsize function using AUCell scores 
 colnames(Mean_HNSC_AUCell)[2] = 'ES_AUCell'
-write.table(Mean_HNSC_AUCell,'ES_AUCell.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Mean_HNSC_AUCell,'ES_AUCell.txt',sep='\t',quote=FALSE,row.names=FALSE)		### saving the effectsize result for AUCell scores
 
 
-####################### GSVA Cohens_d ###############
+####################### GSVA  ###############
 
-data = readRDS('GSVA_IDHAstrocytoma.RDS')
-Mean_HNSC_GSVA = EffectSizeCalculation(data,HNSC_Stem,HNSC_Diff)
+data = readRDS('GSVA_IDHAstrocytoma.RDS')									### Reading combined scoring file of GSVA for all gene sets
+Mean_HNSC_GSVA = EffectSizeCalculation(data,TumorCells,NormalCells)			###  Calling effectsize function using GSVA scores 
 colnames(Mean_HNSC_GSVA)[2] = 'ES_AUCell'
-write.table(Mean_HNSC_GSVA,'ES_GSVA.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Mean_HNSC_GSVA,'ES_GSVA.txt',sep='\t',quote=FALSE,row.names=FALSE)		### saving the effectsize result for GSVA scores
 
 
-################
+################  Combining the effectsizes for all scoring methods in one data frame #############
 
 Comball = merge(Mean_HNSC_AUCell,Mean_HNSC_JAS,by='Process')
 Comball = merge(Comball,Mean_HNSC_SCSE,by='Process')
 Comball = merge(Comball,Mean_HNSC_ssgsea,by='Process')
 Comball = merge(Comball,Mean_HNSC_GSVA,by='Process')
 
-write.table(Comball,'ES_AllMethods.txt',sep='\t',quote=FALSE,row.names=FALSE)
+GSsize = read.table('GeneSetSizes_All_Msigdb_1Feb2021.txt',sep='\t',head=T)   ### Reading the gene set sizes for C2, C3 and Hallmark gene sets
+Comball = merge(GSsize,Comball,by='Process')                                  ### Combining the gene set sizes with the ES scores
+write.table(Comball,'ES_AllMethods.txt',sep='\t',quote=FALSE,row.names=FALSE)   ### Saving the dataframe containing gene set name, ES scores for 5 scoring methods and Gene set sizes
 
 

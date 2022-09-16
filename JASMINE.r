@@ -2,9 +2,15 @@ stringsAsFactors=FALSE
 library(stringr)
 library(foreach)
 library(doParallel)
-library('GSA')
-registerDoParallel(20)  # use multicore, set to the number of our cores
-##############################################################################################################################
+library('GSA')          ## for calling GSA.read.gmt function
+registerDoParallel(20)  # use multicore, set to the number of cores to 20
+
+
+################################## JASMINE function #########################################################
+
+### Rank Calculation function in JASMINE
+## This function is called by JASMINE function to compute ranks of each cell for a gene signature
+ 
 RankCalculation <- function(x,genes){
 			##calculate relative rank of expressed genes from the gene signature
             subdata = x[x!=0]
@@ -14,6 +20,10 @@ RankCalculation <- function(x,genes){
 			FinalRawRank = CumSum/length(subdata)
 			return(FinalRawRank)
 			}			
+
+### OR Calculation function in JASMINE
+## This function is called by JASMINE function to compute enrichment of a gene signature per cell
+ 
 			
 ORCalculation <- function(data,genes){
 			GE = data[which(rownames(data) %in% genes),]
@@ -29,13 +39,19 @@ ORCalculation <- function(data,genes){
             return(OR)
 			}
 
-
+### Normalization function in JASMINE
+## This function is called by JASMINE function to scale the scores from 0 to 1 for a gene set across all the cells
+ 
 NormalizationJAS <- function(JAS_Scores)
             {
 				JAS_Scores = (JAS_Scores - min(JAS_Scores))/(max(JAS_Scores)- min(JAS_Scores))
 				return(JAS_Scores)
 			}
 
+
+## JASMINE function takes as input the single-cell gene expression data, genes in a gene set and pathwayName/gene set name
+ 			
+			
 JASMINE <- function(data,genes,pathwayName)
 		{
   		    idx = match(genes,rownames(data))
@@ -58,6 +74,11 @@ JASMINE <- function(data,genes,pathwayName)
 			}
 		}
 
+############################# Execution of JASMINE function
+
+## Function Input:  single-cell gene expression data, all gene sets in a list, and k represents the index for a gene set in a list
+
+## Function Output: Scores for each cell/sample ID along with pathwayName
 
 ExecutJAS <- function(data,Genesets1,k){
 
@@ -70,16 +91,16 @@ return(subsetJAS)
 
 ###################### Read data #####################
 
-data = readRDS('IDHAstrocytoma_GE_20210311.RDS')
+data = readRDS('IDHAstrocytoma_GE_20210311.RDS')   ## Reading gene expression data in RDS format
 data <- as.matrix(data)
 
-################################################ Execute JASMINE ################
+################################################ Execute JASMINE using Msigb gene sets and dopar function ################
 
 
-Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')       ### loading hallmark gene sets
+Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')       ### Reading hallmark gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%           ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -90,10 +111,10 @@ CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove"
 write.table(CombineAUCell1,'JAS_IDHA_HallmarksResult.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
 
-Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')        ### loading C2 gene sets
+Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')        ### Reading C2 gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%               ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -103,10 +124,10 @@ CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove"
 
 write.table(CombineAUCell2,'JAS_IDHA_C2_GSets.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
-Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt')                ### loading C3 gene sets
+Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt')                ### Reading C3 gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineAUCell3 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell3 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%               ## parallal processing using dopar
 {
 	print("C5")
 	print(k)

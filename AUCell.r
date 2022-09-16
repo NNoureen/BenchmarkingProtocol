@@ -1,11 +1,17 @@
 stringsAsFactors=FALSE
 library(stringr)
 library(AUCell)          ## provide AUCell function
-library(foreach)
-library(doParallel)
+library(foreach)        
+library(doParallel)     ## for parallal processing
 library('GSA')          ## for calling GSA.read.gmt function
-registerDoParallel(20)  # use multicore, set to the number of our cores
-########################### AUCell Function ###############################################
+registerDoParallel(20)  # use multicore, set to the number of cores
+
+########################### AUCell Function to compute the scores ###############################################
+
+## Function Input: single-cell gene expression data and genes in one gene sets
+
+## Function Output: Scores for each cell/sample ID
+
 AUCellfunc <- function(exprMatrix,genes){
 
 out <- tryCatch(
@@ -30,7 +36,12 @@ return(cells_AUCellScores)
 return(out)
 }
 
-##############################################################################################################################
+############################## Calling of AUCell function using the Msigb Gene Sets ####################################
+
+## Function Input: single-cell gene expression data, all gene sets in a list, and k represents the index for a gene set in a list
+
+## Function Output: A dataframe containing sample/cell ID, gene set score and pathwayName
+
 
 Execute_AUCell <- function(exprMatrix,Genesets1,k)
 {
@@ -49,17 +60,18 @@ Execute_AUCell <- function(exprMatrix,Genesets1,k)
 	}
 }
 
-##############  Reading Data set ############################################
-HNSC = readRDS('IDHAstrocytoma_GE_20210311.RDS')
+##############  Reading the single-cell gene expression Data set ############################################
+
+HNSC = readRDS('IDHAstrocytoma_GE_20210311.RDS')             ## Reading gene expression data in RDS format
 exprMatrix <- as.matrix(HNSC)
 
-############################# Reading genes sets and Calling AUCell function ################################
+############################# Reading genes sets and Calling AUCell function using dopar command ################################
 
 
-Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')                ### loading hallmark gene sets
+Genesets1 <-  GSA.read.gmt('h.all.v7.2.symbols.gmt')                ### reading hallmark gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%         ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -70,10 +82,10 @@ CombineAUCell1 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove"
 write.table(CombineAUCell1,'AUCell_IDHA_HallmarksResult.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
 
-Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')             ### loading C2 gene sets
+Genesets1 <-  GSA.read.gmt('c2.all.v7.2.symbols.gmt')             ### reading C2 gene sets
 GSsize = length(Genesets1$genesets)
 
-CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%            ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
@@ -83,11 +95,11 @@ CombineAUCell2 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove"
 
 write.table(CombineAUCell2,'AUCell_IDHA_C2_GSets.txt',sep='\t',quote=FALSE, row.names=FALSE)
 
-Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt')           ### loading C3 gene sets
+Genesets1 <-  GSA.read.gmt('c3.all.v7.2.symbols.gmt')           ### reading C3 gene sets
 GSsize = length(Genesets1$genesets)
 
 
-CombineAUCell3 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar% 
+CombineAUCell3 <- foreach (k=1:GSsize,.combine = rbind,.errorhandling = "remove") %dopar%         ## parallal processing using dopar
 {
 	print("C5")
 	print(k)
