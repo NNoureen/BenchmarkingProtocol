@@ -1,7 +1,3 @@
-
-Data = read.table('CommonCases_ES_IDHAstrocytoma_17March2021.txt',sep='\t',head=T)
-
-
 #############################################################################################################################
 ######################### TP, TN, FP and FN calculation for all methods ###############################################
 #############################################################################################################################
@@ -125,25 +121,7 @@ CombinedSummary = rbind(CombinedSummary,Not_AUCell_Dn)
 return(CombinedSummary)
 }
 
-#############################################################################################################################
-######################### SENSITIVITY    VERSUS SPECIFICITY CALCULATION ###############################################
-#############################################################################################################################
+
+Data = read.table('CommonCases_ES_IDHAstrocytoma_17March2021.txt',sep='\t',head=T)
 Dataset = ConsensusSummary(Data)
-
-Datacomball = rbind()
-
-for(i in seq(1,nrow(Dataset),2)){
-print(i)
-subset = Dataset[c(i,i+1),]
-sensi = subset$Common[1]/(subset$Common[1]+subset$Common[2])
-speci = subset$NC[2]/(subset$NC[1]+subset$NC[2])
-accuracy = (subset$Common[1] + subset$NC[2])/ (subset$Common[1]+subset$Common[2]+subset$NC[1]+subset$NC[2])
-
-subsetRes = data.frame(subset$Method[1],subset$ES[1],sensi,speci,accuracy)
-colnames(subsetRes) = c('Method','ES','Sensitivity','Specificity','Accuracy')
-
-Datacomball = rbind(Datacomball,subsetRes)
-
-}
-
-write.table(Datacomball,'Specificity_Sensitivity.txt',sep='\t',quote=FALSE,row.names=FALSE)
+write.table(Dataset,'ConsensusSummaryFile.txt',sep='\t',quote=FALSE,row.names=FALSE)
